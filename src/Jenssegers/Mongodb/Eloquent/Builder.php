@@ -1,4 +1,6 @@
-<?php namespace Jenssegers\Mongodb\Eloquent;
+<?php
+
+namespace Jenssegers\Mongodb\Eloquent;
 
 use Illuminate\Database\Eloquent\Builder as EloquentBuilder;
 use Jenssegers\Mongodb\Helpers\QueriesRelationships;
@@ -8,6 +10,7 @@ use MongoDB\Model\BSONDocument;
 class Builder extends EloquentBuilder
 {
     use QueriesRelationships;
+
     /**
      * The methods that should be returned from query builder.
      *
@@ -143,6 +146,14 @@ class Builder extends EloquentBuilder
     /**
      * @inheritdoc
      */
+    public function chunkById($count, callable $callback, $column = '_id', $alias = null)
+    {
+        return parent::chunkById($count, $callback, $column, $alias);
+    }
+
+    /**
+     * @inheritdoc
+     */
     public function raw($expression = null)
     {
         // Get raw results from the query builder.
@@ -157,12 +168,20 @@ class Builder extends EloquentBuilder
         elseif ($results instanceof BSONDocument) {
             $results = $results->getArrayCopy();
 
-            return $this->model->newFromBuilder((array)$results);
+            return $this->model->newFromBuilder((array) $results);
         } // The result is a single object.
-        elseif (is_array($results) and array_key_exists('_id', $results)) {
-            return $this->model->newFromBuilder((array)$results);
+        elseif (is_array($results) && array_key_exists('_id', $results)) {
+            return $this->model->newFromBuilder((array) $results);
         }
 
         return $results;
+    }
+
+    /**
+     * @return \Illuminate\Database\ConnectionInterface
+     */
+    public function getConnection()
+    {
+        return $this->query->getConnection();
     }
 }
